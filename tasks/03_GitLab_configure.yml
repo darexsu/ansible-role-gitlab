@@ -1,0 +1,10 @@
+---
+- name: Copy GitLab configuration file.
+  template:
+    src: "{{ gitlab_config.src }}"
+    dest: "/etc/gitlab/{{ gitlab_config.file }}"
+    owner: root
+    group: root
+    mode: 0600
+    backup: "{{ gitlab_config.backup }}"
+  notify: reconfigure gitlab

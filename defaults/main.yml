@@ -1,0 +1,73 @@
+---
+# GitLab
+gitlab:
+  enabled: false
+  domain: "gitlab.local"
+  repo: "gitlab"
+  edition: "gitlab-ce"
+
+# GitLab -> install
+gitlab_install:
+  enabled: false
+
+# GitLab -> self-signed Certificate Authority
+gitlab_ca:
+  enabled: false
+  path: "/etc/gitlab/ssl/"
+  common_name: "{{ gitlab.domain }}"
+  country_name: "US"
+  state_or_province_name: "New York"
+  locality_name: "New York City"
+  organization_name: "Organization_Name"
+  organizational_unit_name: "Community"
+  email_address: "example@gmail.com"
+  basic_constraints: 'CA:TRUE'
+  subject_alt_name: "DNS:{{ gitlab.domain }}"
+
+# GitLab -> configure
+gitlab_config:
+  enabled: false
+  file: "gitlab.rb"
+  src: "gitlab.rb.j2"
+  backup: false
+  data: |
+    external_url 'http://{{ gitlab.domain }}/'
+    registry_external_url 'http://{{ gitlab.domain }}'
+    letsencrypt['enable'] = false
+
+# GitLab -> constants
+gitlab_const:
+  Debian:
+    dependencies: [apt-transport-https, ca-certificates, curl, gnupg2, python3-cryptography]
+    packages: ["{{ gitlab.edition }}"]
+    gitlab_repo: "deb https://packages.gitlab.com/gitlab/{{ gitlab.edition }}/{{ ansible_distribution | lower }}/ {{ ansible_distribution_release }} main"
+    gitlab_gpg: "https://packages.gitlab.com/gpg.key"
+  RedHat:
+    dependencies: [curl, policycoreutils, perl, python3-cryptography]
+    packages: ["{{ gitlab.edition }}"]
+    gitlab_repo: "https://packages.gitlab.com/gitlab/gitlab-ce/el/{{ ansible_distribution_major_version }}/$basearch"
+    gitlab_gpg:
+      - "https://packages.gitlab.com/gpg.key"
+      - "https://packages.gitlab.com/gitlab/gitlab-ce/gpgkey/gitlab-gitlab-ce-3D645A26AB9FBD22.pub.gpg"
+
+# FirewallD
+firewalld:
+  enabled: false
+  service:
+    enabled: true
+    state: "started"
+
+# FirewallD -> rules
+firewalld_rules:
+  service_http:
+    enabled: false
+    zone: "public"
+    state: "enabled"
+    service: "http"
+    permanent: true
+  service_https:
+    enabled: false
+    zone: "public"
+    state: "enabled"
+    service: "https"
+    permanent: true

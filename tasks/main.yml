@@ -1,0 +1,38 @@
+---
+- name: merge dictionaries
+  block:
+    - include_vars:
+        file: ../../darexsu.gitlab/defaults/main.yml
+        name: gitlab_default_vars
+
+    - name: merge default and new dictionaries
+      set_fact:
+        "{{ item.key }}": "{{ gitlab_default_vars[item.key] | combine(merge[item.key], recursive=True)}}"
+      when: gitlab_default_vars[item.key] is defined
+      with_dict: "{{ merge }}"
+
+    - name: combine defaults vars with merge dictionary
+      set_fact:
+        merge: "{{ gitlab_default_vars | combine(merge, recursive=True)}}"
+  when: merge is defined
+
+- name: gitlab role is disabled
+  meta: end_play
+  when: not gitlab.enabled
+
+- name: "-> 01_GitLab_install_{{ ansible_os_family }}.yml"
+  include_tasks: ./tasks/01_GitLab_install_{{ ansible_os_family }}.yml
+  when: gitlab_install.enabled
+
+- name: "-> 02_GitLab_self_signed_CA.yml"
+  include_tasks: "./tasks/02_GitLab_self_signed_CA.yml"
+  when: gitlab_ca.enabled
+
+- name: "-> 03_GitLab_configure.yml"
+  include_tasks: "./tasks/03_GitLab_configure.yml"
+  when: gitlab_config.enabled
+
+- name: include role FirewallD
+  include_role:
+    name: darexsu.firewalld
+  when: firewalld.enabled

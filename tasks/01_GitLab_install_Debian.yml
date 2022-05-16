@@ -1,0 +1,30 @@
+---
+- name: ensure dependencies are installed
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  with_items: "{{ gitlab_const[ansible_os_family]['dependencies'] }}"
+
+- name: add repo gitlab
+  block:
+    - name: add gitlab repository gpg key
+      ansible.builtin.apt_key:
+        url: "{{ gitlab_const[ansible_os_family]['gitlab_gpg'] }}"
+        state: present
+
+    - name: add gitlab repository
+      ansible.builtin.apt_repository:
+        repo: "{{ gitlab_const[ansible_os_family]['gitlab_repo'] }}"
+        state: present
+  when: gitlab.repo == "gitlab"
+
+- name: install gitlab packages. It takes some time
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  with_items: "{{ gitlab_const[ansible_os_family]['packages'] }}"
+  environment:
+    LC_ALL: "en_US.UTF-8"
+    LC_CTYPE: "en_US.UTF-8"
